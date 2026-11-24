@@ -1,5 +1,6 @@
 import { Participant, Rule } from '../types';
 import { checkRules } from './generatePairs';
+import { isValidEmail } from './email';
 
 export interface ParseSuccess {
   ok: true;
@@ -25,15 +26,19 @@ export function formatParticipantText(participants: Record<string, Participant>)
       .filter(r => r.type === 'mustNot')
       .map(r => `!${participants[r.targetParticipantId]?.name ?? ''}`);
 
+    const emailPart = participant.email
+      ? [`<${participant.email}>`]
+      : [];
+
     const hintPart = participant.hint
       ? [`(${participant.hint})`]
       : [];
 
-    return `${[participant.name, ...hintPart, ...mustRules, ...mustNotRules].join(' ')}\n`;
+    return `${[participant.name, ...emailPart, ...hintPart, ...mustRules, ...mustNotRules].join(' ')}\n`;
   }).join('');
 }
 
-const PAREN = /[!=(]/;
+const PAREN = /[!=(<]/;
 
 export function parseParticipantsText(input: string, existingParticipants?: Record<string, Participant>): ParseResult {
   const lines = input.split('\n').map(line => line.trim());
@@ -43,6 +48,7 @@ export function parseParticipantsText(input: string, existingParticipants?: Reco
   const parsedLines: {
     line: number,
     name: string,
+    email?: string,
     hint?: string,
     extra: string[],
   }[] = [];
@@ -56,6 +62,24 @@ export function parseParticipantsText(input: string, existingParticipants?: Reco
     const name = typeof splitIndex === 'number'
       ? line.slice(0, splitIndex).trim()
       : line.trim();
+
+    let email: string | undefined;
+    if (typeof splitIndex === 'number' && line[splitIndex] === '<') {
+      const closeIndex = line.indexOf('>', splitIndex + 1);
+      const rawEmail = closeIndex === -1
+        ? line.slice(splitIndex + 1)
+        : line.slice(splitIndex + 1, closeIndex);
+
+      email = rawEmail.trim();
+      if (closeIndex === -1 || !isValidEmail(email)) {
+        return { ok: false, line: i + 1, key: 'errors.invalidEmail', values: { email } };
+      }
+
+      splitIndex = closeIndex + 1;
+      while (line[splitIndex] === ' ' || line[splitIndex] === '\t') {
+        splitIndex++;
+      }
+    }
 
     let hint: string | undefined;
     if (typeof splitIndex === 'number' && line[splitIndex] === '(') {
@@ -85,13 +109,14 @@ export function parseParticipantsText(input: string, existingParticipants?: Reco
     parsedLines.push({ 
       line: i + 1, 
       name: name.trim(), 
+      email,
       hint: hint?.trim(),
       extra: parts.filter(Boolean)
     });
   }
 
   // First pass: create participants and build name-to-id mapping
-  for (const {line, name, hint} of parsedLines) {
+  for (const {line, name, email, hint} of parsedLines) {
     if (nameToId[name]) {
       return { 
         ok: false, 
@@ -103,7 +128,7 @@ export function parseParticipantsText(input: string, existingParticipants?: Reco
 
     const id = existingParticipants?.[name]?.id ?? crypto.randomUUID();
     nameToId[name] = id;
-    result[id] = { id, name, hint, rules: [] };
+    result[id] = { id, name, email, hint, rules: [] };
   }
 
   // Second pass: process rules

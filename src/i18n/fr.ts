@@ -15,6 +15,7 @@ export const fr: Translations = {
     invalidRuleFormat: "Format de règle invalide : {{rule}}",
     unknownParticipant: "Participant inconnu dans la règle : {{name}}",
     noValidReceivers: "Aucun receveur valide restant pour ce participant",
+    invalidEmail: "Adresse email invalide : {{email}}",
     line: "Ligne {{number}}"
   },
   home: {
@@ -41,6 +42,7 @@ export const fr: Translations = {
     addPerson: "Ajouter une Personne",
     generatePairs: "Générer les Associations",
     enterName: "Entrez le nom du participant",
+    enterEmail: "Email (facultatif)",
     editRules: "Modifier les règles",
     removeParticipant: "Supprimer le participant",
     rulesCount_one: "{{count}} règle définie",
@@ -69,6 +71,10 @@ export const fr: Translations = {
     exportCSV: "Exporter en CSV",
     copySecretLink: "Copier le Lien Secret",
     linkCopied: "Lien copié !",
+    exportEmailFile: "Exporter pour le Script d'Email",
+    exportEmailFileWarning: "Télécharge un fichier contenant l'email et le lien secret de chaque participant, à utiliser avec scripts/send_emails.py. Il révèle toutes les associations à quiconque l'ouvre : supprimez-le une fois les emails envoyés.",
+    missingEmails_one: "{{count}} participant n'a pas d'email et sera ignoré",
+    missingEmails_other: "{{count}} participants n'ont pas d'email et seront ignorés",
     for: "pour",
   },
   settings: {

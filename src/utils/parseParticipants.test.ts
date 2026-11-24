@@ -69,6 +69,66 @@ describe('parseParticipantsText', () => {
     });
   });
 
+  it('should parse participants with emails', () => {
+    const input = `
+      Alice <alice@example.com>
+      Bob
+    `;
+
+    const result = parseParticipantsText(input);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    const participants = Object.values(result.participants);
+    expect(participants.map(p => p.name)).toEqual(['Alice', 'Bob']);
+    expect(participants.find(p => p.name === 'Alice')?.email).toBe('alice@example.com');
+    expect(participants.find(p => p.name === 'Bob')?.email).toBeUndefined();
+  });
+
+  it('should parse emails combined with hints and rules', () => {
+    const input = `
+      Alice <alice@example.com> (likes cats) =Bob !Charlie
+      Bob <bob@example.com>=Alice
+      Charlie
+    `;
+
+    const result = parseParticipantsText(input);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    const participants = Object.values(result.participants);
+    const alice = participants.find(p => p.name === 'Alice');
+    const bob = participants.find(p => p.name === 'Bob');
+
+    expect(alice?.email).toBe('alice@example.com');
+    expect(alice?.hint).toBe('likes cats');
+    expect(alice?.rules).toHaveLength(2);
+    expect(bob?.email).toBe('bob@example.com');
+    expect(bob?.rules).toEqual([{ type: 'must', targetParticipantId: alice?.id }]);
+  });
+
+  it('should reject invalid emails', () => {
+    const result = parseParticipantsText(`
+      Alice <not-an-email>
+    `);
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+
+    expect(result.key).toBe('errors.invalidEmail');
+    expect(result.line).toBe(2);
+    expect(result.values?.email).toBe('not-an-email');
+  });
+
+  it('should reject unterminated emails', () => {
+    const result = parseParticipantsText('Alice <alice@example.com');
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+
+    expect(result.key).toBe('errors.invalidEmail');
+  });
+
   it('should handle empty lines', () => {
     const input = `
       Alice
@@ -168,5 +228,39 @@ describe('formatParticipantText', () => {
       'Bob\n' +
       'Charlie\n'
     );
+  });
+
+  it('should round-trip emails through format and parse', () => {
+    const participants: Record<string, Participant> = {
+      'id1': {
+        id: 'id1',
+        name: 'Alice',
+        email: 'alice@example.com',
+        hint: 'likes cats',
+        rules: [{ type: 'mustNot', targetParticipantId: 'id2' }]
+      },
+      'id2': {
+        id: 'id2',
+        name: 'Bob',
+        email: 'bob@example.com',
+        rules: []
+      }
+    };
+
+    const text = formatParticipantText(participants);
+    expect(text).toBe(
+      'Alice <alice@example.com> (likes cats) !Bob\n' +
+      'Bob <bob@example.com>\n'
+    );
+
+    const result = parseParticipantsText(text);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    const parsed = Object.values(result.participants);
+    expect(parsed.map(p => [p.name, p.email, p.hint])).toEqual([
+      ['Alice', 'alice@example.com', 'likes cats'],
+      ['Bob', 'bob@example.com', undefined],
+    ]);
   });
 }); 

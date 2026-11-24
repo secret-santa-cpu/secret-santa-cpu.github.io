@@ -1,12 +1,14 @@
 import { Gear, X } from "@phosphor-icons/react";
 import { Participant } from '../types';
 import { useTranslation } from 'react-i18next';
+import { isValidEmail } from '../utils/email';
 
 interface ParticipantRowProps {
   participant: Participant;
   participantIndex: number;
   isLast: boolean;
   onNameChange: (name: string) => void;
+  onEmailChange: (email: string) => void;
   onOpenRules: () => void;
   onRemove: () => void;
 }
@@ -16,22 +18,42 @@ export function ParticipantRow({
   participantIndex,
   isLast,
   onNameChange,
+  onEmailChange,
   onOpenRules,
   onRemove,
 }: ParticipantRowProps) {
   const { t } = useTranslation();
 
+  const email = participant.email ?? '';
+  const isEmailInvalid = email !== '' && !isValidEmail(email);
+
   return (
     <div className="flex gap-2">
-      <input
-        type="text"
-        value={participant.name}
-        onChange={(e) => onNameChange(e.target.value)}
-        className="flex-1 min-w-0 p-2 border rounded"
-        placeholder={t('participants.enterName')}
-        tabIndex={participantIndex + 1}
-        autoFocus={isLast && document.activeElement?.tagName !== 'INPUT' && window.innerWidth >= 768}
-      />
+      <div className="flex flex-1 min-w-0 flex-col gap-2 sm:flex-row">
+        <input
+          type="text"
+          value={participant.name}
+          onChange={(e) => onNameChange(e.target.value)}
+          className="flex-1 min-w-0 p-2 border rounded"
+          placeholder={t('participants.enterName')}
+          tabIndex={participantIndex * 2 + 1}
+          autoFocus={isLast && document.activeElement?.tagName !== 'INPUT' && window.innerWidth >= 768}
+        />
+
+        {!isLast && (
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => onEmailChange(e.target.value)}
+            tabIndex={participantIndex * 2 + 2}
+            className={`flex-1 min-w-0 p-2 border rounded ${isEmailInvalid ? 'border-red-500' : ''}`}
+            placeholder={t('participants.enterEmail')}
+            aria-label={t('participants.enterEmail')}
+            aria-invalid={isEmailInvalid}
+            title={isEmailInvalid ? t('errors.invalidEmail', { email }) : undefined}
+          />
+        )}
+      </div>
 
       {!isLast && (
         <>

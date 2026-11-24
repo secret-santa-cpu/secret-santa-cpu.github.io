@@ -1,5 +1,6 @@
 import { encryptText } from "./crypto";
 import { ReceiverData } from "../types";
+import { isValidEmail } from "./email";
 
 export async function generateAssignmentLink(giver: string, receiver: string, receiverHint?: string, instructions?: string) {
   const baseUrl = `${window.location.origin}${window.location.pathname.replace(/\/[^/]*$/, '')}`;
@@ -28,3 +29,25 @@ export function generateCSV(assignments: [string, string][]) {
     .join('\n');
   return `Giver\tReceiver\n${csvContent}`;
 } 
+
+export interface EmailExportEntry {
+  giver: string;
+  email: string | null;
+  link: string;
+}
+
+export interface EmailExport {
+  version: 1;
+  assignments: EmailExportEntry[];
+}
+
+export function buildEmailExport(entries: { giver: string; email?: string | null; link: string }[]): EmailExport {
+  return {
+    version: 1,
+    assignments: entries.map(({ giver, email, link }) => ({
+      giver,
+      email: isValidEmail(email) ? email.trim() : null,
+      link,
+    })),
+  };
+}

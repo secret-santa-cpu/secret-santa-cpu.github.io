@@ -13,6 +13,7 @@ export const en = {
     invalidRuleFormat: "Invalid rule format: {{rule}}",
     unknownParticipant: "Unknown participant in rule: {{name}}",
     noValidReceivers: "No valid receivers left for this participant",
+    invalidEmail: "Invalid email address: {{email}}",
     line: "Line {{number}}"
   },
   home: {
@@ -39,6 +40,7 @@ export const en = {
     addPerson: "Add Person",
     generatePairs: "Generate Pairings",
     enterName: "Enter participant name",
+    enterEmail: "Email (optional)",
     editRules: "Edit rules",
     removeParticipant: "Remove participant",
     rulesCount_one: "{{count}} rule set",
@@ -67,6 +69,10 @@ export const en = {
     exportCSV: "Export as CSV",
     copySecretLink: "Copy Secret Link",
     linkCopied: "Added to clipboard!",
+    exportEmailFile: "Export for Email Script",
+    exportEmailFileWarning: "Downloads a file with every participant's email and secret link, to use with scripts/send_emails.py. It reveals all pairings to whoever opens it: delete it once the emails are sent.",
+    missingEmails_one: "{{count}} participant has no email and will be skipped",
+    missingEmails_other: "{{count}} participants have no email and will be skipped",
     for: "for"
   },
   settings: {
